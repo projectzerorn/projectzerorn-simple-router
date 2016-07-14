@@ -259,6 +259,10 @@ class Router extends React.Component {
       this.customAction(opts);
     };
 
+    const getCurrentRoutesSize = () => {
+      return this.refs.navigator.getCurrentRoutes().length;
+    };
+
     const Content = route.component;
 
     // Remove the margin of the navigation bar if not using navigation bar
@@ -285,6 +289,7 @@ class Router extends React.Component {
     this.setLeftProps = setLeftProps;
     this.setTitleProps = setTitleProps;
     this.customAction = customAction;
+    this.getCurrentRoutesSize = getCurrentRoutesSize;
 
     return (
       <View
@@ -304,6 +309,7 @@ class Router extends React.Component {
           setLeftProps={setLeftProps}
           setTitleProps={setTitleProps}
           customAction={customAction}
+          getCurrentRoutesSize={getCurrentRoutesSize}
           {...route.passProps}
         />
       </View>
