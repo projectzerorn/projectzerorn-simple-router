@@ -1,12 +1,13 @@
 import React, { PropTypes } from 'react';
 import {
   StyleSheet,
-  Navigator,
   View,
   Platform,
   Text,
   StatusBar,
 } from 'react-native';
+
+import { Navigator } from 'react-native-deprecated-custom-components';
 
 import EventEmitter from 'react-native/Libraries/EventEmitter/EventEmitter';
 
