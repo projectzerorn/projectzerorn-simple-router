@@ -1,12 +1,13 @@
 import React, { PropTypes } from 'react';
 import {
   StyleSheet,
-  Navigator,
   View,
   Platform,
   Text,
   StatusBar,
 } from 'react-native';
+
+import { Navigator } from 'react-native-deprecated-custom-components';
 
 import EventEmitter from 'react-native/Libraries/EventEmitter/EventEmitter';
 
@@ -30,6 +31,7 @@ const propTypes = {
   statusBarColor: PropTypes.string,
   statusBarProps: PropTypes.object,
   titleStyle: Text.propTypes.style,
+  sceneConfig: PropTypes.object,
 };
 
 const styles = StyleSheet.create({
@@ -45,14 +47,19 @@ class Router extends React.Component {
 
     this.onForward = this.onForward.bind(this);
     this.onBack = this.onBack.bind(this);
+    this.onPopToRoute = this.onPopToRoute.bind(this);
     this.onReplaceRoute = this.onReplaceRoute.bind(this);
     this.onResetToRoute = this.onResetToRoute.bind(this);
     this.onToFirstRoute = this.onToFirstRoute.bind(this);
     this.customAction = this.customAction.bind(this);
     this.renderScene = this.renderScene.bind(this);
+    this.configureScene = this.configureScene.bind(this);
 
     this.onWillPop = this.onWillPop.bind(this);
     this.onDidPop = this.onDidPop.bind(this);
+
+    this.onWillPopToRoute = this.onWillPopToRoute.bind(this);
+    this.onDidPopToRoute = this.onDidPopToRoute.bind(this);
 
     this.onWillPush = this.onWillPush.bind(this);
     this.onDidPush = this.onDidPush.bind(this);
@@ -96,6 +103,13 @@ class Router extends React.Component {
     });
     aspect.after(this.refs.navigator, 'pop', () => {
       this.onDidPop();
+    });
+
+    aspect.before(this.refs.navigator, 'popToRoute', () => {
+      this.onWillPopToRoute();
+    });
+    aspect.after(this.refs.navigator, 'popToRoute', () => {
+      this.onDidPopToRoute();
     });
 
     aspect.before(this.refs.navigator, 'push', (route) => {
@@ -142,6 +156,12 @@ class Router extends React.Component {
     }
   }
 
+  onPopToRoute(nextRoute, navigator) {
+    navigator.popToRoute(
+      Object.assign(nextRoute)
+    );
+  }
+
   onReplaceRoute(nextRoute, navigator) {
     navigator.replace(
       Object.assign(nextRoute, { index: this.state.route.index || 0 })
@@ -164,6 +184,14 @@ class Router extends React.Component {
 
   onDidPop() {
     this.emitter.emit('didPop');
+  }
+
+  onWillPopToRoute() {
+    this.emitter.emit('willPopToRoute');
+  }
+
+  onDidPopToRoute() {
+    this.emitter.emit('didPopToRoute');
   }
 
   onWillPush(route) {
@@ -209,19 +237,26 @@ class Router extends React.Component {
   setTitleProps(props) {
     this.setState({ titleProps: props });
   }
-
+  getCurrentRoutes() {
+    return this.refs.navigator.getCurrentRoutes();
+  }
   customAction(opts) {
     this.props.customAction(opts);
   }
 
   configureScene(route) {
-    return route.sceneConfig || Navigator.SceneConfigs.FloatFromRight;
+    return route.sceneConfig || this.props.sceneConfig || Navigator.SceneConfigs.FloatFromRight;
   }
 
   renderScene(route, navigator) {
     const goForward = (nextRoute) => {
       this.onForward(nextRoute, navigator);
       this.emitter.emit('push', nextRoute);
+    };
+
+    const popToRoute = (nextRoute) => {
+      this.onPopToRoute(nextRoute, navigator);
+      this.emitter.emit('popToRoute', nextRoute);
     };
 
     const replaceRoute = (nextRoute) => {
@@ -255,8 +290,13 @@ class Router extends React.Component {
       this.setState({ titleProps: props });
     };
 
+    const getCurrentRoutes = () => {
+      const routes = this.refs.navigator.getCurrentRoutes();
+      return routes;
+    };
+
     const customAction = (opts) => {
-      this.customAction(opts);
+      this.props.customAction(opts);
     };
 
     const getCurrentRoutesSize = () => {
@@ -282,12 +322,14 @@ class Router extends React.Component {
 
     this.toRoute = goForward;
     this.toBack = goBackwards;
+    this.popToRoute = popToRoute;
     this.replaceRoute = replaceRoute;
     this.resetToRoute = resetToRoute;
     this.reset = goToFirstRoute;
     this.setRightProps = setRightProps;
     this.setLeftProps = setLeftProps;
     this.setTitleProps = setTitleProps;
+    this.getCurrentRoutes = getCurrentRoutes;
     this.customAction = customAction;
     this.getCurrentRoutesSize = getCurrentRoutesSize;
 
@@ -301,6 +343,7 @@ class Router extends React.Component {
           data={route.data}
           toRoute={goForward}
           toBack={goBackwards}
+          popToRoute={popToRoute}
           routeEmitter={this.emitter}
           replaceRoute={replaceRoute}
           resetToRoute={resetToRoute}
@@ -308,6 +351,7 @@ class Router extends React.Component {
           setRightProps={setRightProps}
           setLeftProps={setLeftProps}
           setTitleProps={setTitleProps}
+          getCurrentRoutes={getCurrentRoutes}
           customAction={customAction}
           getCurrentRoutesSize={getCurrentRoutesSize}
           {...route.passProps}
@@ -334,6 +378,7 @@ class Router extends React.Component {
           borderColor={this.props.borderColor}
           toRoute={this.onForward}
           toBack={this.onBack}
+          popToRoute={this.onPopToRoute}
           replaceRoute={this.onReplaceRoute}
           resetToRoute={this.onResetToRoute}
           goToFirstRoute={this.onToFirstRoute}

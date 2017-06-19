@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react';
 import {
-  BackAndroid,
+  BackHandler,
   Platform,
   StyleSheet,
   Text,
@@ -67,7 +67,7 @@ class NavBarContainer extends React.Component {
 
   componentDidMount() {
     if (Platform.OS === 'android' && !!this.props.handleBackAndroid) {
-      BackAndroid.addEventListener('hardwareBackPress', () => {
+      BackHandler.addEventListener('hardwareBackPress', () => {
         if (this.props.currentRoute.index > 0) {
           this.goBack();
           return true;
@@ -88,7 +88,7 @@ class NavBarContainer extends React.Component {
 
   componentWillUnmount() {
     if (Platform.OS === 'android' && !!this.props.handleBackAndroid) {
-      BackAndroid.removeEventListener('hardwareBackPress');
+      BackHandler.removeEventListener('hardwareBackPress');
     }
   }
 
